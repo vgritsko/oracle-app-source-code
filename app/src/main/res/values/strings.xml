@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">Oracle</string>
+    <string name="error_login_failed">Could not perform login</string>
+    <string name="error_login_cancelled">Login cancelled</string>
+    <string name="start_recording">Start recording</string>
+    <string name="hard_acceleration">Hard acceleration</string>
+    <string name="lane_change">Lane change</string>
+    <string name="bump">Bump on road</string>
+    <string name="hard_break">Hard break</string>
+    <string name="turn_left">Left turn</string>
+    <string name="turn_right">Right turn</string>
+    <string name="red_light">Red light</string>
+    <string name="public_transport">Public transport</string>
+    <string name="slow_traffic">Slow traffic</string>
+    <string name="roughPatch">Rough Patch</string>
+    <string name="stop_recording">Stop recording</string>
+    <string name="logout">Logout</string>
+    <string name="pending">Pending</string>
+    <string name="logged_out">Logged out</string>
+    <string name="accelerometer">Accelerometer</string>
+    <string name="gyroscope">Gyroscope</string>
+    <string name="gps">GPS</string>
+    <string name="compass">Digital compass</string>
+    <string name="rotation_vector">Rotation vector</string>
+    <string name="proximity">Proximity</string>
+    <string name="magnetometer">Magnetometer</string>
+    <string name="upload_failed">File uploading failed. Please try to synchronize later.</string>
+    <string name="upload_success">File uploaded successfully</string>
+    <string name="uploading">Uploading....</string>
+    <string name="io_error_title">File error</string>
+    <string name="io_error_message">There was an error while writing the measurements to the file. Please make sure that your phone has free space.</string>
+    <string name="ok">OK</string>
+    <string name="loading_checking_sensors">Checking available sensors</string>
+    <string name="sample_rate">Sample rate</string>
+    <string name="four_wheeler">Four-wheeler</string>
+    <string name="two_wheeler">Two-wheeler</string>
+    <string name="docked">Docked</string>
+    <string name="handheld">Handheld</string>
+
+    <string name="bluetooth_connection_failed">Unable to connect device</string>
+    <string name="bluetooth_connection_success">Connect successful </string>
+    <string name="no_paired_devices">No paired devices</string>
+
+    <plurals name="upload_multi_success">
+        <item quantity="one">Uploaded %d file successfully</item>
+        <item quantity="other">Uploaded %d files successfully</item>
+    </plurals>
+</resources>

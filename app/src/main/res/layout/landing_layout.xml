@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/start_recording_button"
+        style="@style/bottom_button"
+        android:backgroundTint="@color/dark_blue"
+        android:text="@string/start_recording"
+        android:textColor="@color/dark_yellow" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/start_recording_button"
+
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|center_vertical"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            android:paddingLeft="30dp"
+            android:paddingRight="30dp"
+            android:layout_marginBottom="20dp"
+            android:layout_marginTop="20dp"
+            >
+
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_accelerometer"
+                style="@style/sensor_row"
+                app:name="@string/accelerometer" />
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_gyroscope"
+                style="@style/sensor_row"
+                app:name="@string/gyroscope" />
+
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_gps"
+                style="@style/sensor_row"
+                app:name="@string/gps" />
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_compass"
+                style="@style/sensor_row"
+                app:name="@string/compass" />
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/orientation_vector"
+                style="@style/sensor_row"
+                app:name="@string/rotation_vector" />
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_proximity"
+                style="@style/sensor_row"
+                app:name="@string/proximity" />
+
+            <app.we.go.oracle.features.landing.SensorRow
+                android:id="@+id/sensor_magnetometer"
+                style="@style/sensor_row"
+                app:name="@string/magnetometer" />
+
+            <View style="@style/separator" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                >
+
+                    <RadioGroup
+                       style="@style/radio_group">
+
+                    <RadioButton
+                            android:id="@+id/four_wheeler"
+                        style="@style/radio_button"
+                            android:text="@string/four_wheeler" />
+
+                        <RadioButton
+                            android:id="@+id/two_wheeler"
+                            style="@style/radio_button"
+                            android:text="@string/two_wheeler" />
+
+                    </RadioGroup>
+
+
+                <View style="@style/separator" />
+
+                    <RadioGroup style="@style/radio_group">
+
+                    <RadioButton
+                        android:id="@+id/handheld"
+                        android:text="@string/handheld"
+                        style="@style/radio_button" />
+
+                    <RadioButton
+                        android:id="@+id/docked"
+                        style="@style/radio_button"
+                        android:text="@string/docked" />
+                    </RadioGroup>
+            </LinearLayout>
+        </LinearLayout>
+
+    </ScrollView>
+</RelativeLayout>
