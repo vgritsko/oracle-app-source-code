@@ -4,12 +4,15 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -47,7 +50,9 @@ import java.lang.reflect.Method;
 import app.we.go.oracle.features.landing.LandingFragment;
 import app.we.go.oracle.features.prelogin.IntroActivity;
 import app.we.go.oracle.features.recording.SensorDataWriter;
+import app.we.go.oracle.features.recording.SensorDataWriterService;
 import app.we.go.oracle.features.recording.SensorsToRecord;
+import app.we.go.oracle.helper.ApplicationHelper;
 import app.we.go.oracle.obd2.OBDSenderReciverService;
 import app.we.go.oracle.obd2.ui.BondedBluetoothDevicesDialog;
 import app.we.go.oracle.obd2.ui.BondedDevicesDialogListener;
@@ -93,6 +98,29 @@ LandingFragment.SharedPreferencesValueChanged {
     private final BluetoothAdapter bluetoothAdapter= BluetoothAdapter.getDefaultAdapter();
     private OBDSenderReciverService obdService;
 
+    private SensorDataWriterService sensorDataWriterService;
+    boolean mServiceBound = false;
+
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+
+            SensorDataWriterService.LocalBinder binder = (SensorDataWriterService.LocalBinder) service;
+            sensorDataWriterService = binder.getService();
+            mServiceBound = true;
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mServiceBound = false;
+        }
+    };
+
+
 
     public static Intent newIntent(Context context, String username) {
         Intent i = new Intent(context, MainActivity.class);
@@ -105,6 +133,9 @@ LandingFragment.SharedPreferencesValueChanged {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
 
         checkSensors();
 
@@ -122,6 +153,10 @@ LandingFragment.SharedPreferencesValueChanged {
                     .beginTransaction()
                     .replace(R.id.fragment_container, f, TAG_LANDING_FRAGMENT).commit();
         }
+
+        Intent serviceIntent = new Intent(this,SensorDataWriterService.class);
+        //startService(serviceIntent);
+        bindService(serviceIntent, mConnection,Context.BIND_AUTO_CREATE);
     }
 
     private void initLandingFragment() {
@@ -139,6 +174,8 @@ LandingFragment.SharedPreferencesValueChanged {
                     .addApi(LocationServices.API)
                     .addApi(ActivityRecognition.API)
                     .build();
+
+            ApplicationHelper.mGoogleApiClient=mGoogleApiClient;
         }
 
         locationRequest = new LocationRequest();
@@ -269,7 +306,13 @@ LandingFragment.SharedPreferencesValueChanged {
     @Override
     protected void onPause() {
         super.onPause();
-        stopRecordingPassive();
+       // stopRecordingPassive();
+        RecordingFragment f = (RecordingFragment) getSupportFragmentManager()
+                .findFragmentByTag(TAG_RECORD_FRAGMENT);
+        if (f != null) {
+            toggleIndicator(true);
+        }
+
     }
 
     @Override
@@ -353,6 +396,11 @@ LandingFragment.SharedPreferencesValueChanged {
 
     @Override
     public void startRecording(SensorsToRecord sensorsToRecord, boolean fourWheeler, boolean handheld) {
+
+        /*Intent serviceIntent = new Intent(this,SensorDataWriterService.class);
+        startService(serviceIntent);
+        bindService(serviceIntent, mConnection,Context.BIND_AUTO_CREATE);*/
+
         RecordingFragment f = RecordingFragment
                 .newInstance(getIntent().getStringExtra(EXTRA_USERNAME), sensorsToRecord,
                         fourWheeler, handheld,
@@ -487,5 +535,20 @@ LandingFragment.SharedPreferencesValueChanged {
 
     public  void setOBDService(OBDSenderReciverService servie) {obdService=servie;}
     public  OBDSenderReciverService getOBDService() {return obdService;}
+
+    public SensorDataWriterService getSensorDataWriterService () {
+        return  sensorDataWriterService;
+    }
+
+    @Override
+    protected void onDestroy() {
+
+        sensorDataWriterService.stopSelf();
+
+        if (mServiceBound) { unbindService(mConnection); }
+
+
+        super.onDestroy();
+    }
 }
 

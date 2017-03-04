@@ -1,11 +1,13 @@
 package app.we.go.oracle.features.recording;
 
 import android.app.ProgressDialog;
-import android.bluetooth.BluetoothSocket;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
@@ -26,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 
 
-import app.we.go.oracle.obd2.OBDSenderReciverService;
 import app.we.go.oracle.utils.NetworkUtils;
 import app.we.go.oracle.R;
 import app.we.go.oracle.features.landing.SensorCollection;
@@ -53,6 +54,7 @@ public class RecordingFragment extends Fragment {
     private long startTime;
     private Runnable updateTimeTask;
     private Handler timerHandler;
+    private MainActivity mainActicity;
 
 
 
@@ -90,8 +92,31 @@ public class RecordingFragment extends Fragment {
     private boolean timerCancelled;
     private DbxClientV2 client;
     private Handler sensorHandler;
-    private SensorDataWriter sensorDataWriter;
+   //private SensorDataWriter sensorDataWriter;
     private String filename;
+
+
+    private SensorDataWriterService sensorDataWriterService;
+    boolean mServiceBound = false;
+
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+
+            SensorDataWriterService.LocalBinder binder = (SensorDataWriterService.LocalBinder) service;
+            sensorDataWriterService = binder.getService();
+            mServiceBound= true;
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mServiceBound = false;
+        }
+    };
 
 
     public RecordingFragment() {
@@ -112,6 +137,8 @@ public class RecordingFragment extends Fragment {
         f.setArguments(b);
         return f;
     }
+
+
 
     @Nullable
     @Override
@@ -158,11 +185,13 @@ public class RecordingFragment extends Fragment {
 
         timerHandler = new Handler();
 
-        sensorDataWriter = new SensorDataWriter(getActivity(),
-                getArguments().getBoolean(ARGS_FOUR_WHEELER),
-                getArguments().getBoolean(ARGS_HANDHELD),
-                getArguments().getInt(ARGS_SAMPLE_RATE));
-        sensorHandler = sensorDataWriter.getHandler();
+
+        mainActicity=(MainActivity) getActivity();
+        sensorDataWriterService=mainActicity.getSensorDataWriterService();
+
+
+       // sensorHandler = sensorDataWriter.getHandler();
+        sensorHandler = sensorDataWriterService.getHandler();
         updateTimeTask = new Runnable() {
             public void run() {
                 final long start = startTime;
@@ -184,7 +213,7 @@ public class RecordingFragment extends Fragment {
 
 
 
-        Handler obdTreadHandler = sensorDataWriter.getObdThreadHandler();
+        /*Handler obdTreadHandler = sensorDataWriter.getObdThreadHandler();
         MainActivity activity = (MainActivity)getActivity();
         OBDSenderReciverService obdService=activity.getOBDService();
         if (obdService!=null)
@@ -192,9 +221,13 @@ public class RecordingFragment extends Fragment {
                 obdService.setHandler(obdTreadHandler);
                 sensorHandler.obtainMessage(sensorDataWriter.MSG_BLUETOOTH_IS_ON,
                         OBDSenderReciverService.STATE_CONNECTED).sendToTarget();
-            }
+            }*/
 
-        filename = sensorDataWriter.initFile();
+       // filename = sensorDataWriter.initFile();
+
+       /* if (!sensorDataWriterService.isRecording()) {
+            filename = sensorDataWriterService.initFile();
+        }*/
 
     }
 
@@ -206,15 +239,36 @@ public class RecordingFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        sensorDataWriter.initSensors((
-                SensorCollection) getArguments().getParcelable(ARGS_SENSORS));
+       /* sensorDataWriter.initSensors((
+                SensorCollection) getArguments().getParcelable(ARGS_SENSORS));*/
+        if (!sensorDataWriterService.isRecording()) {
 
-        startTime = System.currentTimeMillis();
+            sensorDataWriterService.initService(getArguments().getBoolean(ARGS_FOUR_WHEELER),
+                    getArguments().getBoolean(ARGS_HANDHELD),
+                    getArguments().getInt(ARGS_SAMPLE_RATE),
+                    mainActicity.getLocationRequest());
+
+            filename = sensorDataWriterService.initFile();
+
+            sensorDataWriterService.initSensors((
+                    SensorCollection) getArguments().getParcelable(ARGS_SENSORS));
+            startTime = System.currentTimeMillis();
+
+            sensorDataWriterService.start(startTime);
+        }
+
+        else {
+
+            startTime=sensorDataWriterService.getStartTime();
+
+        }
+
+
 
         timerHandler.removeCallbacks(updateTimeTask);
         timerHandler.postDelayed(updateTimeTask, 100);
 
-        sensorDataWriter.start(startTime);
+
     }
 
     @Override
@@ -239,7 +293,8 @@ public class RecordingFragment extends Fragment {
 
     public void stopRecording(boolean uploadFileNow) {
         timerCancelled = true;
-        sensorDataWriter.stopRecording();
+        //sensorDataWriter.stopRecording();
+        sensorDataWriterService.stopRecording();
 
         if (uploadFileNow) {
             if (!NetworkUtils.isNetworkAvailable(getActivity())) {
@@ -300,8 +355,9 @@ public class RecordingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        sensorDataWriter.stopRecording();
-        sensorDataWriter = null;
+        //sensorDataWriter.stopRecording();
+
+
 
     }
 
