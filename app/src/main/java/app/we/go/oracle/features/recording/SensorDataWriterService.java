@@ -194,6 +194,7 @@ public class SensorDataWriterService extends Service implements
 
                 OBDRequest response = (OBDCurrentDataRequest) msg.obj;
                 OBDCommand rpmCmd = response.getCommandsList().get(0);
+
                 currentValues.setRPMvalue(Integer.valueOf(rpmCmd.getCalculatedResult()));
 
                 OBDCommand speedCmd = response.getCommandsList().get(1);
@@ -679,7 +680,9 @@ public class SensorDataWriterService extends Service implements
         public String getCSVLine() {
 
             StringBuilder sb = new StringBuilder();
-            Log.i("ELAPSED",String.valueOf(elapsed));
+            /*Log.i("ELAPSED",String.valueOf(elapsed));
+            Log.i("BLUETOOTH",String.valueOf(blueToothConnection));
+            Log.i("RPM",String.valueOf(rpm));*/
             sb.append(timestamp).append(SEP)
                     .append(elapsed).append(SEP)
                     .append(accelerometerValues[0]).append(SEP)

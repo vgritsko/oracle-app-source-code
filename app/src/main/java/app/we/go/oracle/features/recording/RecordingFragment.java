@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 
 
+import app.we.go.oracle.obd2.OBDSenderReciverService;
 import app.we.go.oracle.utils.NetworkUtils;
 import app.we.go.oracle.R;
 import app.we.go.oracle.features.landing.SensorCollection;
@@ -191,7 +192,7 @@ public class RecordingFragment extends Fragment {
 
 
        // sensorHandler = sensorDataWriter.getHandler();
-        sensorHandler = sensorDataWriterService.getHandler();
+      //  sensorHandler = sensorDataWriterService.getHandler();
         updateTimeTask = new Runnable() {
             public void run() {
                 final long start = startTime;
@@ -254,7 +255,22 @@ public class RecordingFragment extends Fragment {
                     SensorCollection) getArguments().getParcelable(ARGS_SENSORS));
             startTime = System.currentTimeMillis();
 
+            sensorHandler = sensorDataWriterService.getHandler();
+
+            Handler obdTreadHandler = sensorDataWriterService.getObdThreadHandler();
+            MainActivity activity = (MainActivity)getActivity();
+            OBDSenderReciverService obdService=activity.getOBDService();
+
+            if (obdService!=null)
+            if (obdService.getState()==OBDSenderReciverService.STATE_CONNECTED) {
+                obdService.setHandler(obdTreadHandler);
+                sensorHandler.obtainMessage(sensorDataWriterService.MSG_BLUETOOTH_IS_ON,
+                        OBDSenderReciverService.STATE_CONNECTED).sendToTarget();
+            }
+
+
             sensorDataWriterService.start(startTime);
+
         }
 
         else {
