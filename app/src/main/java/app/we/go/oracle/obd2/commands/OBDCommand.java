@@ -93,6 +93,15 @@ public abstract class OBDCommand {
             end+=2;
         }
 
+        checkBufferLength();
+
+    }
+
+    protected  void checkBufferLength () {
+
+        if (buffer.size()<=1) {
+            throw  new OBDIIRuntimeException(cmd,rawData);
+        }
     }
 
     protected abstract void valuesCalculation ();
