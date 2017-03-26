@@ -157,6 +157,8 @@ LandingFragment.SharedPreferencesValueChanged {
         Intent serviceIntent = new Intent(this,SensorDataWriterService.class);
         //startService(serviceIntent);
         bindService(serviceIntent, mConnection,Context.BIND_AUTO_CREATE);
+
+        mGoogleApiClient.connect();
     }
 
     private void initLandingFragment() {
@@ -265,12 +267,12 @@ LandingFragment.SharedPreferencesValueChanged {
     }
 
     protected void onStart() {
-        mGoogleApiClient.connect();
+       // mGoogleApiClient.connect();
         super.onStart();
     }
 
     protected void onStop() {
-        mGoogleApiClient.disconnect();
+       // mGoogleApiClient.disconnect();
         super.onStop();
     }
 
@@ -501,9 +503,9 @@ LandingFragment.SharedPreferencesValueChanged {
         return locationRequest;
     }
 
-    public GoogleApiClient getGoogleApiClient() {
+   /* public GoogleApiClient getGoogleApiClient() {
         return mGoogleApiClient;
-    }
+    }*/
 
 
     @Override
@@ -542,6 +544,8 @@ LandingFragment.SharedPreferencesValueChanged {
 
     @Override
     protected void onDestroy() {
+
+        mGoogleApiClient.disconnect();
 
         sensorDataWriterService.stopSelf();
 

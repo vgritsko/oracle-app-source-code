@@ -14,22 +14,31 @@ import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.BatteryManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.DetectedActivity;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -59,12 +68,13 @@ import static android.hardware.Sensor.TYPE_ROTATION_VECTOR;
  */
 
 public class SensorDataWriterService extends Service implements
-        SensorEventListener, LocationListener {
+        SensorEventListener, LocationListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
 
     public static final String BASE_FILENAME = "sensor_data_";
     public static final int MSG_BUTTON = 1;
     public  static  final int MSG_BLUETOOTH_IS_ON =2;
-    private  final GoogleApiClient googleApiClient=ApplicationHelper.mGoogleApiClient;
+    private   GoogleApiClient mGoogleApiClient;
 
     private Handler obdThreadHandler;
     private Handler sensorHandler;
@@ -90,6 +100,21 @@ public class SensorDataWriterService extends Service implements
 
     private final IBinder mBinder = new LocalBinder();
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
     public class LocalBinder extends Binder {
 
         public SensorDataWriterService getService() {
@@ -104,8 +129,17 @@ public class SensorDataWriterService extends Service implements
     @Override
     public void onCreate() {
         super.onCreate();
+        initLocation();
         PowerManager powerManager  = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,getClass().getSimpleName());
+        mGoogleApiClient.connect();
+    }
+
+
+    @Override
+    public void onDestroy() {
+        mGoogleApiClient.disconnect();
+        super.onDestroy();
     }
 
     @Nullable
@@ -113,6 +147,64 @@ public class SensorDataWriterService extends Service implements
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
+
+
+    private void initLocation() {
+
+        if (mGoogleApiClient == null) {
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
+                    .addApi(ActivityRecognition.API)
+                    .build();
+
+
+        }
+
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(50);
+        locationRequest.setFastestInterval(50);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient,
+                        builder.build());
+       /* result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult result) {
+                final Status status = result.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location requests here.
+                       // checkLocationPermissions();
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            status.startResolutionForResult(
+                                    MainActivity.this,
+                                    REQUEST_CHECK_SETTINGS);
+                        } catch (IntentSender.SendIntentException e) {
+                            // Ignore the error.
+                        }
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way
+                        // to fix the settings so we won't show the dialog.
+                       // initLandingFragment();
+                        break;
+                }
+            }
+        });*/
+    }
+
 
 
     @Override
@@ -252,18 +344,18 @@ public class SensorDataWriterService extends Service implements
                 return;
             }
             Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(
-                    googleApiClient
+                    mGoogleApiClient
             );
             if (lastLocation != null) {
                 currentValues.setLocation(lastLocation);
             }
 
            LocationServices.FusedLocationApi.requestLocationUpdates(
-                    googleApiClient, locationRequest, this, sensorHandler.getLooper());
+                    mGoogleApiClient, locationRequest, this, sensorHandler.getLooper());
         }
         Intent intent = new Intent(context, ActivityRecognizedService.class );
         activityDetectionPendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( googleApiClient, sampleRate, activityDetectionPendingIntent);
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mGoogleApiClient, sampleRate, activityDetectionPendingIntent);
 
 
         BroadcastReceiver receiver = new BroadcastReceiver() {
@@ -411,6 +503,7 @@ public class SensorDataWriterService extends Service implements
     @Override
     public void onLocationChanged(Location location) {
         currentValues.setLocation(location);
+        Log.i("LOCTION",location.toString());
     }
 
 
@@ -437,9 +530,9 @@ public class SensorDataWriterService extends Service implements
         sensorHandler.removeCallbacks(writeValuesTask);
         sensorManager.unregisterListener(this);
         //sensorManager=null;
-        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 
-        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(googleApiClient, activityDetectionPendingIntent);
+        ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mGoogleApiClient, activityDetectionPendingIntent);
 
         this.context = null;
     }

@@ -50,18 +50,18 @@ import static android.hardware.Sensor.TYPE_PROXIMITY;
 import static android.hardware.Sensor.TYPE_ROTATION_VECTOR;
 
 
-public class SensorDataWriter implements SensorEventListener, LocationListener {
+public class SensorDataWriter /*implements SensorEventListener, LocationListener*/ {
     public static final String BASE_FILENAME = "sensor_data_";
     public static final int MSG_BUTTON = 1;
     public  static  final int MSG_BLUETOOTH_IS_ON =2;
-    private final GoogleApiClient googleApiClient;
+ //   private final GoogleApiClient googleApiClient;
 
     private Handler obdThreadHandler;
     private Handler sensorHandler;
     private int sampleRate;
     private FileOutputStream fos;
     private Context context;
-    private Entry currentValues;
+   // private Entry currentValues;
     private Sensor accelerometer;
     private Sensor gyroscope;
     private Sensor proximity;
@@ -71,14 +71,14 @@ public class SensorDataWriter implements SensorEventListener, LocationListener {
     private SensorManager sensorManager;
     private Runnable writeValuesTask;
     private boolean recordingCancelled;
-    private PendingIntent activityDetectionPendingIntent;
+    private PendingIntent activityDetectionPendingIntent;}
 
-
+/*
     public SensorDataWriter(Context context, boolean fourWheeler, boolean handheld, int sampleRate) {
         this.context = context;
         this.sampleRate = sampleRate;
 
-        googleApiClient = ((MainActivity) context).getGoogleApiClient();
+       // googleApiClient = ((MainActivity) context).getGoogleApiClient();
 
 
         currentValues = new Entry(fourWheeler, handheld);
@@ -190,7 +190,7 @@ public class SensorDataWriter implements SensorEventListener, LocationListener {
                     && ActivityCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
-            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(
+           Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(
                     googleApiClient
             );
             if (lastLocation != null) {
@@ -650,4 +650,4 @@ public class SensorDataWriter implements SensorEventListener, LocationListener {
 
         }
     }
-}
+}*/
